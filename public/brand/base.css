@@ -1,0 +1,39 @@
+/* Shared look for the rooms product. Fonts are self-hosted: no Google or other third parties. */
+@font-face { font-family: "Display"; src: url(/fonts/display-800.woff2) format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Inter"; src: url(/fonts/inter-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Inter"; src: url(/fonts/inter-500.woff2) format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Inter"; src: url(/fonts/inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Mono"; src: url(/fonts/mono-500.woff2) format("woff2"); font-weight: 400 500; font-display: swap; }
+:root {
+  --bg:#0c0814; --bg-elev:#130d1f; --surface:#1a1229; --surface-2:#251a3a; --ink:#f4effc; --muted:#a898c2; --steel:#7d6f98;
+  --rule:#2e2342; --accent:#a855f7; --accent-2:#c084fc; --accent-ink:#ffffff; --accent-soft:rgba(168,85,247,.13);
+  --ok:#4ade80; --err:#fb7185; --warm:#f0abfc;
+  --display:"Display", Impact, sans-serif; --body:"Inter", system-ui, sans-serif; --mono:"Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.6 var(--body); overflow-x: clip; }
+[hidden] { display: none !important; }
+a { color: var(--accent-2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font: 800 1.45rem/1 var(--display); letter-spacing: .07em; text-transform: uppercase; color: var(--ink); }
+.brand:hover { text-decoration: none; }
+.brand i { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, var(--accent), #6d28d9); display: inline-grid; place-items: center; font-style: normal; }
+.brand i::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--bg); box-shadow: 0 5px 0 -1px var(--bg); transform: translateY(-2px); }
+.site-head { border-bottom: 1px solid var(--rule); padding: 16px 0; }
+.site-head .wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.site-head nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: .92rem; }
+.site-head nav a { color: var(--muted); }
+.pill { font: 500 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); border-radius: 99px; padding: 5px 10px; }
+.eyebrow { font: 500 .75rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-2); margin: 0 0 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; font: 600 1rem var(--body);
+  border-radius: 8px; border: 1.5px solid transparent; cursor: pointer; background: var(--accent); color: var(--accent-ink); text-decoration: none; }
+.btn:hover { background: #9333ea; text-decoration: none; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.btn.line { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.line:hover { border-color: var(--accent); color: var(--accent-2); }
+.btn.small { padding: 8px 12px; font-size: .88rem; }
+.btn:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.site-foot { color: var(--steel); font: .75rem var(--mono); padding: 28px 0 36px; display: flex; gap: 18px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 56px; }
+.site-foot a { color: var(--muted); }
+.site-notice { background: linear-gradient(90deg, rgba(168,85,247,.22), rgba(109,40,217,.18)); border-bottom: 1px solid var(--accent); color: var(--ink); font-size: .92rem; padding: 10px 16px; text-align: center; }

@@ -1,0 +1,59 @@
+/* Futuristic layer for the landing page: faint grid, purple glow, glass cards, glowing buttons.
+   Look borrowed from a Grok mockup; everything stays self-hosted (no outside fonts or scripts).
+   Remove the <link> to this file in site/index.html to go back to the plain look. */
+body { background: transparent; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image: linear-gradient(rgba(168,85,247,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,.055) 1px, transparent 1px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 25%, #000 30%, transparent 78%);
+          mask-image: radial-gradient(ellipse 70% 60% at 50% 25%, #000 30%, transparent 78%); }
+body::after { content: ""; position: fixed; left: 50%; top: -280px; width: min(1000px, 140vw); height: 720px; transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(124,58,237,.24) 0%, transparent 68%); filter: blur(70px); z-index: -1; pointer-events: none; }
+
+/* glowing launch banner and glass header */
+.site-notice { background: linear-gradient(90deg, rgba(124,58,237,.35), rgba(168,85,247,.28), rgba(124,58,237,.35));
+  box-shadow: 0 0 24px rgba(168,85,247,.35), inset 0 -1px 0 rgba(192,132,252,.7); text-shadow: 0 0 12px rgba(192,132,252,.6); }
+.site-head { position: sticky; top: 0; z-index: 20; background: rgba(12,8,20,.62); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-bottom-color: rgba(168,85,247,.16); }
+.brand i { box-shadow: 0 0 18px rgba(168,85,247,.55); }
+
+/* hero: glowing headline accent */
+h1 em { filter: drop-shadow(0 0 22px rgba(168,85,247,.45)); }
+
+/* buttons: gradient + glow */
+.btn:not(.line) { background: linear-gradient(90deg, #7c3aed, #a855f7); border-color: transparent; box-shadow: 0 0 22px rgba(168,85,247,.35);
+  transition: transform .2s ease, box-shadow .2s ease; }
+.btn:not(.line):hover { background: linear-gradient(90deg, #7c3aed, #a855f7); transform: translateY(-2px); box-shadow: 0 0 32px rgba(168,85,247,.55); }
+.btn.line { background: rgba(18,12,32,.5); border-color: rgba(168,85,247,.4); }
+.btn.line:hover { box-shadow: 0 0 20px rgba(168,85,247,.3); }
+
+/* tags glow softly */
+.pill { border-color: rgba(168,85,247,.38); background: rgba(18,12,32,.55); box-shadow: 0 0 12px rgba(168,85,247,.12) inset; }
+
+/* glass cards with a lift on hover */
+.steps > div, .feat > div, .price, .flow li, .mock, pre {
+  background: rgba(18,12,32,.66); border: 1px solid rgba(168,85,247,.3); border-radius: 18px;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 8px 32px rgba(0,0,0,.32);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.steps > div:hover, .feat > div:hover, .flow li:hover, .price:hover {
+  transform: translateY(-4px); border-color: rgba(192,132,252,.6); box-shadow: 0 12px 40px rgba(124,58,237,.25); }
+.price.pass { border-color: rgba(192,132,252,.75); box-shadow: 0 0 34px rgba(168,85,247,.28), 0 8px 32px rgba(0,0,0,.32);
+  background: linear-gradient(135deg, rgba(168,85,247,.2), rgba(109,40,217,.06)), rgba(18,12,32,.66); }
+.bubble.me { box-shadow: 0 0 20px rgba(168,85,247,.4); }
+
+/* section labels glow a touch */
+.eyebrow { text-shadow: 0 0 14px rgba(192,132,252,.45); }
+
+@media (prefers-reduced-motion: reduce) { .btn, .steps > div, .feat > div, .flow li, .price { transition: none; } .steps > div:hover, .feat > div:hover, .flow li:hover, .price:hover, .btn:not(.line):hover { transform: none; } }
+
+/* the fixed glow above replaces the hero's old boxed glow, which would show hard edges here */
+.hero::before { display: none; }
+
+/* ---- the Rooms app and the other pages: same glass look, no hover lift on forms ---- */
+.card, .waiting, .attach, #messages {
+  background-color: rgba(18,12,32,.66); border-color: rgba(168,85,247,.3); border-radius: 18px;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 8px 32px rgba(0,0,0,.32); }
+.pass-card { border-color: rgba(192,132,252,.75); box-shadow: 0 0 30px rgba(168,85,247,.22), 0 8px 32px rgba(0,0,0,.32); }
+input[type=text], select, textarea { border-radius: 12px; border-color: rgba(168,85,247,.25); transition: border-color .2s, box-shadow .2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,.18), 0 0 18px rgba(168,85,247,.25); }
+.msg.mine .body { box-shadow: 0 0 18px rgba(168,85,247,.35); }

@@ -1,0 +1,41 @@
+{
+  "name": "suppressor",
+  "version": "1.0.0",
+  "description": "Suppressor: private, end-to-end encrypted rooms and private agent commerce for people and AI agents, $5/month over x402",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "DEV_SKIP_PAYMENTS=1 node src/server.js",
+    "test": "node test/run.js",
+    "room-demo": "node scripts/room-demo.js",
+    "admin": "node scripts/admin.js",
+    "build:web": "esbuild web/rooms-app.js --bundle --minify --format=esm --target=es2022 --outfile=site/rooms/app.js",
+    "build:mcp": "esbuild mcp/server.js --bundle --platform=node --format=esm --target=node20 --outfile=site/mcp/suppressor-mcp.mjs --banner:js=\"import { createRequire as __cr } from \\\"node:module\\\"; const require = __cr(import.meta.url);\"",
+    "deal-demo": "node scripts/deal-demo.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@coinbase/x402": "^2.1.0",
+    "@x402/core": "^2.28.0",
+    "@x402/evm": "^2.28.0",
+    "@x402/express": "^2.28.0",
+    "@x402/extensions": "^2.28.0",
+    "@x402/fetch": "^2.28.0",
+    "compression": "^1.8.2",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "viem": "^2.57.4"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "esbuild": "^0.28.2",
+    "zod": "^4.6.6"
+  }
+}
