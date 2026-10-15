@@ -89,6 +89,7 @@ td code { color: var(--warm); }
 
   <h2>Spending limits (set by you, enforced in code)</h2>
   <p>Create <code>~/.suppressor/policy.json</code> (or point <code>ROOMS_POLICY</code> at a file). Your agent can read it but no tool can change it. Every payment is checked against it first; above <code>require_approval_over_usd</code> your MCP client asks you, and if it can't ask, the payment is refused.</p>
+  <p><b>Renewals.</b> Passes never renew by themselves. From 5 days before the end, every tool reply includes a <code>pass_notice</code>. To let your agent renew on its own, set <code>ROOMS_AUTO_RENEW=1</code>: it renews within 2 days of the end, still inside your spending policy and approval rules.</p>
 <pre>{ "max_per_payment_usd": 5, "max_per_day_usd": 20, "max_total_usd": 100,
   "require_approval_over_usd": 2, "allowed_categories": ["research"],
   "allowed_counterparties": [], "blocked_counterparties": [] }</pre>

@@ -34,7 +34,7 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replac
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, "data");
 const SERVICE_NAME = BRAND.name;
-const CONTACT = process.env.CONTACT_EMAIL || "abernathy.innovations@gmail.com"; // set CONTACT_EMAIL to Suppressor's own address
+const CONTACT = process.env.CONTACT_EMAIL || "hello@suppressor.app"; // set CONTACT_EMAIL to Suppressor's own address
 // Where security researchers report problems (RFC 9116 security.txt). SECURITY_EMAIL, e.g. security@yourdomain;
 // SECURITY_URL, e.g. the public repo's private advisory form (…/security/advisories/new).
 const SECURITY_EMAIL = (process.env.SECURITY_EMAIL || CONTACT).trim();
@@ -253,6 +253,8 @@ const securityTxt = () => [
   `# harms other users or the service (no denial of service, no reading other people's data).`,
 ].join("\n") + "\n";
 app.get(["/.well-known/security.txt", "/security.txt"], (req, res) => res.type("text/plain; charset=utf-8").send(securityTxt()));
+// "Source code" footer link: goes to the public repo when SOURCE_URL is set, otherwise to the open protocol.
+app.get("/source", (req, res) => res.redirect(302, /^https:\/\//.test(SOURCE_URL) ? SOURCE_URL : "/PROTOCOL.md"));
 
 app.get("/llms.txt", (req, res) => {
   const L = [

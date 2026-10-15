@@ -43,6 +43,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .pass-actions, .pass-key { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
 .pass-key input { flex: 1 1 260px; min-width: 0; font: .85rem var(--mono); }
 .pill.on { color: var(--ok); border-color: rgba(74,222,128,.4); }
+.pill.soon { color: var(--warm); border-color: rgba(240,171,252,.5); }
+.renew-warn { margin-top: 14px; padding: 14px 16px; border: 1px solid rgba(240,171,252,.45); border-left: 3px solid var(--warm); border-radius: 0 10px 10px 0; background: rgba(240,171,252,.08); color: var(--ink); }
+.renew-warn p { margin: 0 0 10px; line-height: 1.5; }
+.renew-warn .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.room .renew-warn { margin: 0 0 10px; }
 .myrooms { list-style: none; margin: 8px 0 0; padding: 0; }
 .myrooms li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--rule); }
 .myrooms span { font: .75rem var(--mono); color: var(--steel); text-transform: uppercase; letter-spacing: .08em; }
@@ -166,15 +171,20 @@ h2 { font: 800 1.7rem/1 var(--display); text-transform: uppercase; margin: 0 0 6
         </div>
         <span class="pill" id="pass-state">No pass on this device</span>
       </div>
-      <p class="fine" style="margin-top:8px">30 days of unlimited rooms and messages: up to 50 rooms open at once, 25 people each, invitees join free, rooms stay open while your pass does. No automatic charges: renew when you want.</p>
+      <p class="fine" style="margin-top:8px">30 days of unlimited rooms and messages: up to 50 rooms open at once, 25 people each, invitees join free, rooms stay open while your pass does. No automatic charges: renew when you want. Days left carry over when you renew early, and we'll remind you here 5 days before it ends.</p>
       <div class="pass-actions" id="pass-none">
         <button class="btn" id="pass-buy" type="button">Get the monthly pass · <span data-price="pass-buy">$5</span></button>
         <button class="btn line small" id="pass-add" type="button">I have a pass key</button>
       </div>
       <div class="pass-actions" id="pass-active" hidden>
         <button class="btn line small" id="pass-renew" type="button">Renew +30 days · <span id="renew-price">$5</span></button>
+        <button class="btn line small" id="pass-cal" type="button">Add renewal reminder to my calendar</button>
         <button class="btn line small" id="pass-show" type="button">Show pass key</button>
         <button class="btn line small" id="pass-remove" type="button">Remove from this device</button>
+      </div>
+      <div class="renew-warn" id="renew-warn" hidden>
+        <p id="renew-warn-text"></p>
+        <div class="row"><button class="btn small" id="renew-warn-btn" type="button">Renew +30 days · <span data-price="pass-renew">$5</span></button></div>
       </div>
       <div class="pass-key" id="pass-key-box" hidden>
         <input type="text" id="pass-key" spellcheck="false" autocomplete="off" aria-label="Pass key" placeholder="pass_…">
@@ -219,6 +229,10 @@ h2 { font: 800 1.7rem/1 var(--display); text-transform: uppercase; margin: 0 0 6
       </div>
     </div>
     <div>
+      <div class="renew-warn" id="room-renew-warn" hidden>
+        <p id="room-renew-text"></p>
+        <div class="row" id="room-renew-row"><button class="btn small" id="room-renew-btn" type="button">Renew +30 days · <span data-price="pass-renew">$5</span></button></div>
+      </div>
       <div class="invite" id="invite-row">
         <input type="text" id="invite-link" readonly aria-label="Invite link">
         <button class="btn small" id="copy-invite" type="button">Copy invite</button>
@@ -271,6 +285,8 @@ h2 { font: 800 1.7rem/1 var(--display); text-transform: uppercase; margin: 0 0 6
   <a href="/privacy.html">Privacy</a>
   <a href="/terms.html">Terms</a>
   <a href="/PROTOCOL.md">Open protocol</a>
+  <a href="/source">Source code</a>
+  <a href="/roadmap.html">Roadmap</a>
   <a href="/llms.txt">For agents</a>
 </footer>
 <script type="module" src="/rooms/app.js"></script>

@@ -30,6 +30,40 @@ const freeInvite = (code) => /^(trial|free)_/.test(code || "");
 
 // ---- unlimited pass (key kept only in this browser) ----------------------------------
 const getPass = () => store.get("sup.pass");
+// Renewal reminders. Passes never renew on their own (crypto wallets can't be charged automatically),
+// and rooms on a pass close, and their messages are deleted, when it ends. So warn early and plainly.
+const RENEW_WARN_DAYS = 5;
+const passDaysLeft = (p) => Math.max(0, Math.ceil((new Date(p.expires_at) - Date.now()) / 86400e3));
+const endDate = (iso) => new Date(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+function renewWarning(p) {
+  if (!p || !p.expires_at) return null;
+  if (new Date(p.expires_at) <= new Date()) return "Your pass has ended. Renew within 30 days to keep using the same pass key.";
+  const d = passDaysLeft(p);
+  if (d > RENEW_WARN_DAYS) return null;
+  return `Your pass ends in ${d} day${d === 1 ? "" : "s"} (${endDate(p.expires_at)}). When it ends, rooms on it close and their messages are deleted. Renewing now keeps your days left and adds 30 more.`;
+}
+// A calendar reminder made on this device: Suppressor never learns your email or calendar.
+function downloadReminder() {
+  const p = getPass();
+  if (!p || !p.expires_at) return;
+  const end = new Date(p.expires_at);
+  const at = new Date(Math.max(Date.now() + 3600e3, end.getTime() - 3 * 86400e3));
+  const f = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const url = `${location.origin}/rooms/`;
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Suppressor//Pass reminder//EN", "BEGIN:VEVENT",
+    `UID:pass-${end.getTime()}@${location.host}`, `DTSTAMP:${f(new Date())}`, `DTSTART:${f(at)}`, `DTEND:${f(new Date(at.getTime() + 15 * 60e3))}`,
+    `SUMMARY:Renew your ${health?.name || "Suppressor"} pass ($5)`,
+    `DESCRIPTION:Your pass ends ${end.toUTCString()}. Rooms on it close and their messages are deleted when it ends. Renew at ${url}`,
+    `URL:${url}`, "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:PT0M", "DESCRIPTION:Renew your pass", "END:VALARM", "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = "renew-pass-reminder.ics";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  status(`Reminder saved for ${endDate(at.toISOString())}. Open the file to add it to your calendar.`, "ok");
+}
 const passActive = () => { const p = getPass(); return !!(p && p.key && new Date(p.expires_at) > new Date()); };
 function renderPass() {
   const p = getPass(), on = passActive();
@@ -37,8 +71,11 @@ function renderPass() {
   $("#pass-active").hidden = !p;
   const st = $("#pass-state");
   if (!p) { st.textContent = "No pass on this device"; st.className = "pill"; }
-  else if (on) { const d = Math.max(0, Math.ceil((new Date(p.expires_at) - Date.now()) / 86400e3)); st.textContent = `Active · ${d} day${d === 1 ? "" : "s"} left`; st.className = "pill on"; }
-  else { st.textContent = "Expired: renew to keep using it"; st.className = "pill"; }
+  else if (on) { const d = passDaysLeft(p); st.textContent = `Active · ${d} day${d === 1 ? "" : "s"} left`; st.className = d <= RENEW_WARN_DAYS ? "pill soon" : "pill on"; }
+  else { st.textContent = "Expired: renew to keep using it"; st.className = "pill soon"; }
+  const w = renewWarning(p);
+  $("#renew-warn").hidden = !w;
+  if (w) $("#renew-warn-text").textContent = w;
   const pro = on;
   document.querySelectorAll("#size option[data-pass]").forEach((o) => { o.disabled = !pro; o.hidden = !pro; });
   if (!pro && Number($("#size").value) > 8) $("#size").value = "2";
@@ -77,7 +114,7 @@ async function buyPass(tier) {
     store.set("sup.pass", { key: r.pass_key, expires_at: r.expires_at, tier: r.tier });
     renderPass();
     showKey(false);
-    status(`Your ${r.plan} pass is active. Save your pass key below.`, "ok");
+    status(`Your ${r.plan} pass is active. Save your pass key below, and tap "Add renewal reminder to my calendar" so it doesn't lapse.`, "ok");
   } catch (err) {
     status(err.message, "err");
   } finally {
@@ -288,12 +325,27 @@ async function refreshInfo() {
     const vanish = info.disappear_minutes ? `messages vanish after ${info.disappear_minutes >= 60 ? info.disappear_minutes / 60 + " h" : info.disappear_minutes + " min"} · ` : "";
     $("#room-meta").textContent = `${info.trial ? "Free trial · " : info.pass ? "Monthly pass · " : ""}${vanish}${info.members.length} of ${info.max_members} members · ${info.pass ? info.messages_used + " messages" : info.messages_used + "/" + info.message_limit + " messages"} · expires ${new Date(info.expires_at).toLocaleString()}`;
     $("#waiting").hidden = others > 0;
+    roomRenewWarning(info);
     verifyKeys(info);
     $("#safety").textContent = await safetyCode(info.members);
     $("#invite-row").hidden = !current.creds.owner || info.members.length >= info.max_members;
   } catch (err) {
     gone(err);
   }
+}
+
+// Inside a room on a pass: warn before the pass (and so the room) ends. Only the pass holder can renew.
+function roomRenewWarning(info) {
+  const box = $("#room-renew-warn");
+  const ends = info.pass && info.expires_at ? new Date(info.expires_at) : null;
+  const d = ends ? Math.max(0, Math.ceil((ends - Date.now()) / 86400e3)) : Infinity;
+  if (!ends || d > RENEW_WARN_DAYS) { box.hidden = true; return; }
+  const mine = !!current?.creds?.owner && !!getPass();
+  $("#room-renew-text").textContent = mine
+    ? `This room closes when your pass ends in ${d} day${d === 1 ? "" : "s"} (${endDate(info.expires_at)}), and its messages are deleted. Renew to keep it open.`
+    : `This room closes on ${endDate(info.expires_at)}, when the host's pass ends, and its messages will be deleted.`;
+  $("#room-renew-row").hidden = !mine;
+  box.hidden = false;
 }
 
 // ---- key pinning (PROTOCOL.md §4) -------------------------------------------------------
@@ -743,6 +795,9 @@ async function main() {
   $("#pass-buy").addEventListener("click", () => buyPass("pro"));
   $("#pass-renew").addEventListener("click", renewPass);
   $("#pass-show").addEventListener("click", () => showKey(false));
+  $("#pass-cal").addEventListener("click", downloadReminder);
+  $("#renew-warn-btn").addEventListener("click", renewPass);
+  $("#room-renew-btn").addEventListener("click", async () => { await renewPass(); refreshInfo(); });
   $("#pass-add").addEventListener("click", () => showKey(true));
   $("#pass-key-save").addEventListener("click", savePassKey);
   $("#pass-remove").addEventListener("click", () => {

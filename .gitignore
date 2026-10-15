@@ -1,0 +1,7 @@
+node_modules
+.env
+data
+
+# downloaded at build time by scripts/fetch-voice.mjs
+site/voice/lib/
+site/voice/models/

@@ -63405,7 +63405,7 @@ var SuppressorAgent = class _SuppressorAgent {
 // mcp/server.js
 var VERSION = "1.2.0";
 var env = (k) => process.env[`ROOMS_${k}`];
-var BASE = (env("URL") || "https://abernathy-x402-production.up.railway.app").replace(/\/$/, "");
+var BASE = (env("URL") || "https://suppressor.app").replace(/\/$/, "");
 var STATE_FILE = env("STATE") || path.join(os.homedir(), ".suppressor", "state.json");
 var WALLET_KEY = env("WALLET_KEY");
 var POLICY_FILE = env("POLICY") || path.join(os.homedir(), ".suppressor", "policy.json");
@@ -63490,7 +63490,10 @@ var ok = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2
 var fail = (e) => ({ content: [{ type: "text", text: `Error: ${e.message}` }], isError: true });
 var tool = (fn) => async (args) => {
   try {
-    return ok(await fn(args || {}));
+    const out = await fn(args || {});
+    const renewed = await maybeAutoRenew();
+    const notice = renewed || passNotice();
+    return ok(notice && out && typeof out === "object" && !Array.isArray(out) ? { ...out, pass_notice: notice } : out);
   } catch (e) {
     return fail(e);
   }
@@ -63512,6 +63515,48 @@ server.registerTool("rooms_try_free", {
 }));
 var passKey = () => env("PASS_KEY") || state.pass?.key || null;
 var passLive = () => !!passKey() && (!state.pass?.expires_at || env("PASS_KEY") || new Date(state.pass.expires_at) > /* @__PURE__ */ new Date());
+async function guardSpend(usd, what) {
+  if (!WALLET_KEY) throw new Error("Paying needs a wallet: set ROOMS_WALLET_KEY (a wallet holding a little USDC on Base) in this MCP server's settings.");
+  const pol = new SpendingPolicy(loadPolicy(), state.ledger || []);
+  const c = pol.check({ usd, counterparty: "suppressor", category: "suppressor-pass" });
+  if (c.decision === "deny") throw new Error(`Not paid: ${c.reason} (Spending policy: ${POLICY_FILE}. If you limit allowed_categories, add "suppressor-pass".)`);
+  if (c.decision === "approve" && !await askOwner(`Approve paying $${usd} for ${what}? (${c.reason})`)) throw new Error("Not paid: the owner didn't approve it.");
+}
+function recordSpend(usd, note) {
+  state.ledger = state.ledger || [];
+  state.ledger.push({ at: (/* @__PURE__ */ new Date()).toISOString(), usd, to_agent: "suppressor", note });
+  saveState(state);
+}
+var RENEW_WARN_DAYS = 5;
+var passDaysLeft = () => state.pass?.expires_at ? Math.ceil((Date.parse(state.pass.expires_at) - Date.now()) / 864e5) : null;
+function passNotice() {
+  const d = passDaysLeft();
+  if (d == null || d > RENEW_WARN_DAYS) return null;
+  if (d <= 0) return "Your Suppressor pass has ended. Renew with rooms_pass_renew ($5, +30 days) within 30 days to keep the same pass key.";
+  return `Your Suppressor pass ends in ${d} day${d === 1 ? "" : "s"} (${state.pass.expires_at}). Rooms on it close and their messages are deleted when it ends. Renew with rooms_pass_renew ($5, +30 days; days left are kept).`;
+}
+var autoRenewing = false;
+var lastAutoTry = 0;
+async function maybeAutoRenew() {
+  if (env("AUTO_RENEW") !== "1" || autoRenewing || !passKey() || !WALLET_KEY) return null;
+  const d = passDaysLeft();
+  if (d == null || d > 2 || Date.now() - lastAutoTry < 12 * 36e5) return null;
+  autoRenewing = true;
+  lastAutoTry = Date.now();
+  try {
+    await guardSpend(5, "auto-renewing your Suppressor pass (ROOMS_AUTO_RENEW=1)");
+    const r = await call2(payer(), "POST", "/v1/passes/renew", null, passKey());
+    recordSpend(5, "pass auto-renewal");
+    state.pass.expires_at = r.expires_at;
+    saveState(state);
+    return `Auto-renewed your pass for $5. It now runs to ${r.expires_at}.`;
+  } catch (e) {
+    log("auto-renew skipped: " + e.message);
+    return `Auto-renew didn't go through: ${e.message}`;
+  } finally {
+    autoRenewing = false;
+  }
+}
 server.registerTool("rooms_open", {
   title: "Open a room (with your monthly pass)",
   description: `Open a private, end-to-end encrypted room on your $5 monthly pass: unlimited messages, up to 25 members, open as long as the pass. No pass yet? Use rooms_pass_buy ($5 / 30 days) or rooms_try_free. ${ACCEPT}`,
@@ -63529,7 +63574,7 @@ server.registerTool("rooms_open", {
 }));
 server.registerTool("rooms_pass_buy", {
   title: "Buy the monthly pass ($5 / 30 days)",
-  description: `30 days of unlimited rooms and messages for $5: 50 open rooms, 25 members each, invitees join free; rooms_open becomes free. Paid in USDC on Base (needs ROOMS_WALLET_KEY), within your spending policy. The pass key is saved on this machine only. Nothing renews automatically. ${ACCEPT}`,
+  description: `30 days of unlimited rooms and messages for $5: 50 open rooms, 25 members each, invitees join free; rooms_open becomes free. Paid in USDC on Base (needs ROOMS_WALLET_KEY), within your spending policy. The pass key is saved on this machine only. Nothing renews automatically unless the owner sets ROOMS_AUTO_RENEW=1. ${ACCEPT}`,
   inputSchema: {}
 }, tool(async () => {
   const usd = 5;
@@ -63551,7 +63596,7 @@ server.registerTool("rooms_pass_status", {
     state.pass.expires_at = r.expires_at;
     saveState(state);
   }
-  return r;
+  return { ...r, renews_automatically: env("AUTO_RENEW") === "1" ? "yes, within 2 days of the end, if your spending policy allows" : "no (set ROOMS_AUTO_RENEW=1 to let this agent renew within your spending policy)" };
 }));
 server.registerTool("rooms_pass_renew", {
   title: "Renew the monthly pass (+30 days)",
