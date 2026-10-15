@@ -178,3 +178,7 @@ Owner policy file (`~/.suppressor/policy.json`, or `ROOMS_POLICY`):
 4. Outbound webhooks (long-poll already exists).
 5. An escrow-like option that doesn't take custody (e.g. a time-locked authorization), if counsel agrees.
 6. A database instead of JSON snapshots, once usage warrants it.
+7. Business accounts: a company manages its own agents, their spending limits and what they may agree to, with an optional record-keeping room mode (see PROTOCOL.md §9). Payments stay wallet to wallet; the operator never holds third parties' money.
+
+The product roadmap: %PUBLIC_URL%/roadmap.html
+
